@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Inter var, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans,
+    sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol,
+    Noto Color Emoji;
+}
+
+@layer base {
+  html {
+    font-family: Proxima Nova, system-ui, sans-serif;
+  }
+}
+vercel-live-feedback {
+  display: none !important;
+}
+
+.fnt-sans-serif {
+  font-family: 'Oswald', sans-serif;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/oswald/v49/TK3_WkUHHAIjg75cFRf3bXL8LICs13FvsUZiZQ.woff2)
+    format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+.ck-content {
+  /* border-left: solid green 1px; */
+  padding: 2.5rem !important;
+  /* z-index: 30 !important; */
+}
+
+.ck-content-v {
+  /* border-left: solid green 1px; */
+  padding: 0 !important;
+  /* z-index: 30 !important; */
+}
+
+.ck.ck-balloon-panel {
+  z-index: 3001 !important;
+}
+/* .ck-body-wrapper {
+  z-index: 100000 !important;
+}  */
+
+.container-swiper {
+  /* padding-bottom: 50px; */
+  max-width: 260px;
+  width: 100%;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+.album {
+  margin-bottom: 30px;
+  display: flex;
+  flex-flow: column wrap;
+  align-items: center;
+}
+.song {
+  position: relative;
+  display: flex;
+  flex-flow: column wrap;
+  /* align-items: center; */
+  /* background: white; */
+  transition: transform 200ms;
+  cursor: pointer;
+}
+.separator {
+  padding: 8px;
+  content: '';
+  display: block;
+  height: 1px;
+  background: gray;
+  opacity: 0.1;
+  width: 190px;
+}
+.blur-load {
+  background-size: cover;
+  background-position: center;
+  background-image: url('/images/blur/vg-hotel-d.jpg');
+}

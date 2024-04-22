@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id                 Int        @id @default(autoincrement())
+  name               String?
+  email              String?    @unique
+  password           String?
+  createdAt          DateTime   @default(now()) @map(name: "created_at")
+  updatedAt          DateTime   @updatedAt @map(name: "modified_at")
+  role               Role       @default(USER)
+  isNotificationOn   Boolean    @default(false)
+  profile            Profile?
+  isDeleted          Boolean    @default(false)
+  createdBy          Post[]     @relation("createdBy")
+  modifiedBy         Post[]     @relation("modifiedBy")
+  likeCreatedBy      Like[]     @relation("likeCreatedBy")
+  likeModifiedBy     Like[]     @relation("likeModifiedBy")
+  categoryCreatedBy  Category[] @relation("categoryCreatedBy")
+  categoryModifiedBy Category[] @relation("categoryModifiedBy")
+  tagCreatedBy       Tag[]      @relation("tagCreatedBy")
+  tagModifiedBy      Tag[]      @relation("tagModifiedBy")
+  commentCreatedBy   Comment[]  @relation("commentCreatedBy")
+  commentModifiedBy  Comment[]  @relation("commentModifiedBy")
+}
+
+model Profile {
+  id     Int     @id @default(autoincrement())
+  image  String?
+  bio    String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int     @unique
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "modified_at")
+}
+
+model Otp {
+  id    Int     @id @default(autoincrement())
+  email String? @unique
+  otp   Int?
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Post {
+  id          Int          @id @default(autoincrement())
+  title       String
+  summary     String       @db.LongText
+  image       String
+  postContent PostContent?
+  published   Boolean      @default(false)
+  publishAt   DateTime     @updatedAt @map(name: "publish_at")
+  language    String       @default("en")
+  active      Boolean      @default(false)
+  publicUrl   String
+  category    Category?    @relation(fields: [categoryId], references: [id])
+  tags        PostTag[]
+
+  createdBy    User? @relation("createdBy", fields: [createdById], references: [id])
+  createdById  Int
+  modifiedBy   User? @relation("modifiedBy", fields: [modifiedById], references: [id])
+  modifiedById Int
+
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  updatedAt     DateTime  @updatedAt @map(name: "modified_at")
+  postContentId Int?
+  likes         Like[]    @relation("likes")
+  comments      Comment[] @relation("comments")
+  categoryId    Int?
+
+  @@index([createdById])
+  @@index([modifiedById])
+  @@index([categoryId])
+}
+
+model PostContent {
+  id       Int    @id @default(autoincrement())
+  language String
+  content  String @db.LongText
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   Int    @unique
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  name   String
+  active Boolean @default(true)
+
+  createdBy    User? @relation("categoryCreatedBy", fields: [createdById], references: [id])
+  createdById  Int
+  modifiedBy   User? @relation("categoryModifiedBy", fields: [modifiedById], references: [id])
+  modifiedById Int
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "modified_at")
+  Post      Post[]
+
+  @@index([modifiedById])
+  @@index([createdById])
+}
+
+model Tag {
+  id     Int     @id @default(autoincrement())
+  name   String
+  active Boolean @default(true)
+
+  createdBy    User? @relation("tagCreatedBy", fields: [createdById], references: [id])
+  createdById  Int
+  modifiedBy   User? @relation("tagModifiedBy", fields: [modifiedById], references: [id])
+  modifiedById Int
+
+  createdAt DateTime  @default(now()) @map(name: "created_at")
+  updatedAt DateTime  @updatedAt @map(name: "modified_at")
+  PostTag   PostTag[]
+
+  @@index([createdById])
+  @@index([modifiedById])
+}
+
+model PostTag {
+  id     Int   @id @default(autoincrement())
+  post   Post? @relation(fields: [postId], references: [id])
+  postId Int?
+  tag    Tag?  @relation(fields: [tagId], references: [id])
+  tagId  Int?
+
+  @@index([postId])
+  @@index([tagId])
+}
+
+model Like {
+  id           Int   @id @default(autoincrement())
+  post         Post  @relation("likes", fields: [postId], references: [id], onDelete: Cascade)
+  postId       Int
+  createdBy    User? @relation("likeCreatedBy", fields: [createdById], references: [id])
+  createdById  Int
+  modifiedBy   User? @relation("likeModifiedBy", fields: [modifiedById], references: [id])
+  modifiedById Int
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "modified_at")
+
+  @@index([createdById])
+  @@index([modifiedById])
+  @@index([postId])
+}
+
+model Comment {
+  id           Int    @id @default(autoincrement())
+  message      String
+  post         Post   @relation("comments", fields: [postId], references: [id], onDelete: Cascade)
+  postId       Int
+  createdBy    User?  @relation("commentCreatedBy", fields: [createdById], references: [id])
+  createdById  Int
+  modifiedBy   User?  @relation("commentModifiedBy", fields: [modifiedById], references: [id])
+  modifiedById Int
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "modified_at")
+
+  @@index([createdById])
+  @@index([modifiedById])
+  @@index([postId])
+}
