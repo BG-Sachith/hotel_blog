@@ -18,6 +18,7 @@ import {
   SvgIcon,
   TextField,
   Typography,
+  Dialog,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
@@ -40,6 +41,8 @@ import dynamic from 'next/dynamic';
 import { RootState } from '@/src/provider/redux/store';
 import { useDispatch, useSelector } from 'react-redux';
 import { Post } from '@/src/modules/post';
+import { PostLikeVM } from '@/src/modules/PostLikeVM';
+import { User } from '@/src/modules/user';
 const GroupButtonH = dynamic(() => import('../../elements/GroupButtonH'));
 const LoginDialog = dynamic(() => import('../../auth/LoginDialog'));
 const RegisterDialog = dynamic(() => import('../../auth/RegisterDialog'));
@@ -91,7 +94,6 @@ export default function PostCardView({
 
   const [post, setPost] = React.useState<Post | any>(selectedPost);
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [loadingCo, setLoadingCo] = useState(false);
   const commentRef = useRef(undefined);
   const [registerCardOpen, setRegisterCardOpen] = React.useState(false);
@@ -142,7 +144,12 @@ export default function PostCardView({
       setLoadingCo(false);
 
       handleClickVariant('success', 'success!');
-      post?.comments?.push(cm);
+      setPost((p: any) => {
+        return {
+          ...p,
+          comments: [...post?.comments, cm],
+        };
+      });
       v.value = '';
       // }, 1500);
     }
@@ -172,24 +179,30 @@ export default function PostCardView({
     if (post?.id && session?.user?.email) {
       if (
         post?.likes &&
-        post?.likes?.findIndex((l: any) => l == session?.user?.email) > -1
+        post?.likes?.findIndex(
+          (l: any) => l.createdById == new User(session?.user).id
+        ) > -1
       ) {
-        deleteLike(post.id).then((p) => {
+        deleteLike(post.id, new User(session?.user).id).then((p) => {
           // console.log(p);
-          if (p)
+          if (p.res.count)
             setPost((pr: any) => {
-              let l = pr.likes.filter((l: any) => l != session?.user?.email);
+              let l = pr.likes.filter(
+                (l: any) => l.createdById != new User(session?.user).id
+              );
               return { ...pr, ...{ likes: l } };
             });
-          // console.log('post ddsds          ddddddddddddddddddd');
         });
       } else
-        createLike(post.id).then((p) => {
+        createLike({
+          postId: post.id,
+          createdById: new User(session?.user).id,
+          modifiedById: new User(session?.user).id,
+        }).then((p) => {
           // console.log(p);
-          if (p)
+          if (p?.like)
             setPost((pr: any) => {
-              let l = [...pr.likes, session?.user?.email];
-              return { ...pr, ...{ likes: l } };
+              return { ...pr, ...{ likes: [...pr.likes, p.like] } };
             });
           // console.log(post);
         });
@@ -202,10 +215,11 @@ export default function PostCardView({
     setApp_url((p) => window.location.host + '/');
     // console.log(selectedPost);
     // if (!isViewed) {
-    console.log(selectedPost);
+    // console.log(post);
     setPgViewed(true);
     setLastModyfyAt(dateTimeFrom(post?.updatedAt));
     setCreatedAt(dateFrom(post?.createdAt));
+    setPost(selectedPost);
     // }
   }, [selectedPost, isViewed]);
 
@@ -253,14 +267,14 @@ export default function PostCardView({
             className="h-fit w-full"
           >
             {isViewOnly ? (
-              post?.image ? (
+              post?.publicUrl ? (
                 <CardMedia
                   component="img"
                   alt={post.title}
                   className="h-full"
                   // src={post.publicUrl}
                   loading="lazy"
-                  image={post?.image}
+                  image={post?.publicUrl}
                 />
               ) : (
                 <Skeleton
@@ -339,7 +353,8 @@ export default function PostCardView({
                       sx={{
                         color:
                           post?.likes?.findIndex(
-                            (l: any) => l == session?.user?.email
+                            (l: any) =>
+                              l.createdById == new User(session?.user).id
                           ) > -1
                             ? ''
                             : 'text.secondary',

@@ -4,19 +4,14 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import { Editor } from 'ckeditor5-custom-build/build/ckeditor';
 // import Editor from '@ckeditor/ckeditor5-build-classic';
 
-interface CKeditorProps {
-  onChange: (data: string) => void;
-  editorLoaded: boolean;
-  name: string;
-  value: string;
-}
+// interface CKeditorProps {
+//   onChange: (data: string) => void;
+//   editorLoaded: boolean;
+//   name: string;
+//   value: string;
+// }
 
-export default function MyCKeditor({
-  onChange,
-  editorLoaded,
-  name,
-  value,
-}: CKeditorProps) {
+export default function MyCKeditor({ onChange, editorLoaded, name, value }) {
   // const editorRef = useRef<{
   //   CKEditor: typeof CKEditor;
   //   InlineEditor: typeof Editor;
@@ -38,7 +33,7 @@ export default function MyCKeditor({
             // You can store the "editor" and use when it is needed.
             console.log('Editor is ready to use!', editor);
           }}
-          onChange={(event, editor: any) => {
+          onChange={(event, editor) => {
             if (editor) {
               const data = editor.getData();
               let sourceElement = data.sourceElement;
@@ -93,7 +88,7 @@ const mediaEmbd = [
   {
     name: 'allow-all',
     url: /^.+/,
-    html: (match: any) => {
+    html: (match) => {
       var url = match[0].replace('watch?v=', 'embed/');
       // console.log(url)
       return (

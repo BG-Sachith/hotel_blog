@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             BucketKeyEnabled: true,
             Bucket,
             Key: path_ + name_,
-            ACL: 'public-read',
+            // ACL: 'public-read',
             Body,
           })
         );

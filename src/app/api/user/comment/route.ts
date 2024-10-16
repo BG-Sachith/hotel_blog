@@ -6,7 +6,13 @@ export const POST = async (req: NextRequest) => {
   try {
     const { data } = await req.json();
 
-    const res: Comment = await prismadb.comment.create({ data: data });
+    const res: Comment = await prismadb.comment.create({
+      data: data,
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        modifiedBy: { select: { id: true, name: true } },
+      },
+    });
     // console.log(category);
     return NextResponse.json({ data: res }, { status: 200 });
   } catch (error) {
@@ -21,6 +27,10 @@ export const PUT = async (req: NextRequest) => {
     const res: Comment = await prismadb.comment.update({
       where: { id: Number(data.id) },
       data: data,
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        modifiedBy: { select: { id: true, name: true } },
+      },
     });
     // console.log(category);
     return NextResponse.json({ data: res }, { status: 200 });
@@ -34,7 +44,11 @@ export const GET = async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const postId: any = searchParams.get('postId');
     const res: Comment[] = await prismadb.comment.findMany({
-      where: { postId: Number(postId) },
+      where: { AND: { postId: Number(postId), hide: false } },
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        modifiedBy: { select: { id: true, name: true } },
+      },
     });
     // console.log(category);
     return NextResponse.json({ data: res }, { status: 200 });
@@ -48,7 +62,10 @@ export const DELETE = async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const id: any = searchParams.get('id');
 
-    const res = await prismadb.comment.delete({ where: { id: Number(id) } });
+    const res = await prismadb.comment.update({
+      where: { id: Number(id) },
+      data: { hide: true },
+    });
     // console.log(category);
     return NextResponse.json({ res: res }, { status: 200 });
   } catch (error) {

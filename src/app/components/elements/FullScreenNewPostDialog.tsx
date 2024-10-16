@@ -688,7 +688,7 @@ export default function FullScreenNewPostDialog({ button }: any) {
                     <br />
                   </Typography>
                   <Typography>
-                    {JSON.stringify(newPost)}
+                    {/* {JSON.stringify(newPost)} */}
                     <br />
                   </Typography>
                   <Typography>

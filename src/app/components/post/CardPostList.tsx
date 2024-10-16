@@ -33,13 +33,10 @@ export default function CardPostList({}: any) {
   const dispatch = useDispatch();
   const { posts, isPageLoading, isPageLoadingMore, hasMore, pageNumber }: any =
     useSelector((state: RootState) => state.paginate);
-  const { isEdidMode }: any = useSelector((state: RootState) => state.settings);
 
   const [isLoading, setLoading] = useState(true);
-  // const [isSwiperLoading, setSwiperLoading] = useState(true);
   const [showMore, setShowMore] = useState(false);
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
-  // const [latestPost, setLatestPost] = useState<Post[]>([]);
 
   useEffect(() => {
     dispatch(setPageLoading(true));

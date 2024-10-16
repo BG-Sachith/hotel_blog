@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prismadb from '@/src/util/prismadb';
+import { populateS3SignedUrl } from '../../aws/awsService';
 
 export const GET = async (req: NextRequest) => {
   try {
@@ -14,13 +15,16 @@ export const GET = async (req: NextRequest) => {
         // },
         createdBy: { select: { id: true, name: true } },
         modifiedBy: { select: { id: true, name: true } },
-        likes: { select: { id: true } },
+        likes: { select: { id: true, createdById: true } },
         category: { select: { id: true, name: true } },
         tags: {
           select: { tag: { select: { id: true, name: true } } },
         },
       },
     });
+    res.publicUrl = res.image
+      ? await populateS3SignedUrl(res.image)
+      : res.publicUrl;
     return NextResponse.json(
       { data: { ...res, tags: res.tags.map((t: any) => t.tag) } },
       { status: 200 }

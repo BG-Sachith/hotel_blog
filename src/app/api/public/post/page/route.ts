@@ -1,5 +1,6 @@
 import prismadb from '@/src/util/prismadb';
 import { NextRequest, NextResponse } from 'next/server';
+import { populateS3SignedUrl } from '../../../aws/awsService';
 
 export const PUT = async (req: NextRequest) => {
   try {
@@ -43,7 +44,7 @@ export const PUT = async (req: NextRequest) => {
         include: {
           createdBy: { select: { id: true, name: true } },
           modifiedBy: { select: { id: true, name: true } },
-          likes: { select: { id: true } },
+          likes: { select: { id: true, createdById: true } },
           category: { select: { id: true, name: true } },
           tags: {
             select: { tag: { select: { id: true, name: true } } },
@@ -56,11 +57,18 @@ export const PUT = async (req: NextRequest) => {
         where: searchQry,
       }),
     ]);
+    const posts = [];
+    for (let p of post) {
+      posts.push({
+        ...p,
+        publicUrl: p.image ? await populateS3SignedUrl(p.image) : p.publicUrl,
+      });
+    }
     return NextResponse.json(
       {
         data:
           count > 0
-            ? post.map((p: any) => {
+            ? posts.map((p: any) => {
                 {
                   return { ...p, tags: p.tags.map((t: any) => t.tag) };
                 }

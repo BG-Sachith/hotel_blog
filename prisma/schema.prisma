@@ -35,11 +35,11 @@ model User {
 }
 
 model Profile {
-  id     Int     @id @default(autoincrement())
-  image  String?
+  id     Int    @id @default(autoincrement())
+  image  Bytes? @db.LongBlob
   bio    String
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int     @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int    @unique
 
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "modified_at")
@@ -154,20 +154,22 @@ model Like {
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "modified_at")
 
+  @@unique([postId, createdById])
   @@index([createdById])
   @@index([modifiedById])
   @@index([postId])
 }
 
 model Comment {
-  id           Int    @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   message      String
-  post         Post   @relation("comments", fields: [postId], references: [id], onDelete: Cascade)
+  post         Post    @relation("comments", fields: [postId], references: [id], onDelete: Cascade)
   postId       Int
-  createdBy    User?  @relation("commentCreatedBy", fields: [createdById], references: [id])
+  createdBy    User?   @relation("commentCreatedBy", fields: [createdById], references: [id])
   createdById  Int
-  modifiedBy   User?  @relation("commentModifiedBy", fields: [modifiedById], references: [id])
+  modifiedBy   User?   @relation("commentModifiedBy", fields: [modifiedById], references: [id])
   modifiedById Int
+  hide         Boolean @default(false)
 
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "modified_at")

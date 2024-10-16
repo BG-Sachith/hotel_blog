@@ -60,6 +60,8 @@ import { createLike, deleteLike } from '@/src/service/likeService';
 import { setPosts } from '@/src/provider/redux/features/Paginate';
 import { setSelectedPost } from '@/src/provider/redux/features/SelectedItem';
 import { PostVM } from '@/src/modules/PostVm';
+import { PostLikeVM } from '@/src/modules/PostLikeVM';
+import { User } from '@/src/modules/user';
 
 const RegisterDialog = dynamic(() => import('../auth/RegisterDialog'), {
   ssr: false,
@@ -117,7 +119,9 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
   const [loginCardOpen, setLoginCardOpen] = React.useState(false);
   const [isBackdrop, setIsBackdrop] = React.useState(false);
   const [myItem, setMyIem] = React.useState<any>(p);
-  const [selectedPostImg, setSelectedPostImg] = useState<any>(p?.image || []);
+  const [selectedPostImg, setSelectedPostImg] = useState<any>(
+    p?.publicUrl || []
+  );
   const [createdAt, setCreatedAt] = React.useState(p?.createdAt);
   const [app_url, setApp_url] = React.useState(
     'hhttps://www.vajrapanilife.com/'
@@ -160,8 +164,8 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
       const cm = new Comment({
         message: v?.value,
         postId: id,
-        createdBy: session?.user?.email,
-        modifiedBy: session?.user?.email,
+        createdById: new User(session?.user).id,
+        modifiedById: new User(session?.user).id,
         hide: false,
       });
 
@@ -190,9 +194,8 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
   };
 
   const updateMe = useCallback(async (data: any, selectedImage: any) => {
-    // console.log(data);
+    console.log(selectedImage);
 
-    setSnackbar({ children: 'Please Select Tags', severity: 'warning' });
     if (!data?.tags || data?.tags?.length == 0) {
       handleClickVariant('warning', 'Please Select Tags!');
       // setSnackbar({ children: 'Please Select Tags', severity: 'warning' });
@@ -204,15 +207,12 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
       return;
     }
     data = { ...data, image: '', publicUrl: '' }; //todo remove
+    const regex = /post\/[^?]*/;
+    const match = selectedPostImg.match(regex);
     if (!data?.image && selectedImage) {
       //todo enable
       if (selectedImage?.type) {
-        let name_ =
-          selectedPostImg && selectedPostImg?.split('/')?.length > 1
-            ? selectedPostImg?.split('/')[1]?.split('_post.')[0] +
-              '_post.' +
-              selectedImage.type.split('/')[1]
-            : Date.now() + '_post.' + selectedImage.type.split('/')[1];
+        let name_ = Date.now() + '_post.' + selectedImage.type.split('/')[1];
         const { fileRes } = await uploadImgForKey(
           name_,
           'post/',
@@ -223,6 +223,8 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
           data.image = fileRes.Key;
           data.publicUrl = fileRes.Location;
         }
+      } else if (match) {
+        data.image = match[0];
       } else data.image = selectedPostImg;
     } else {
       setSnackbar({ children: 'Please Select Image', severity: 'warning' });
@@ -234,7 +236,7 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
     updatePost(data).then((d) => {
       // console.log(d);
       if (d.data) {
-        console.log(d);
+        // console.log(d);
         if (selectedImage)
           d.data.image = selectedImage?.type
             ? URL.createObjectURL(selectedImage)
@@ -286,16 +288,6 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
 
   const handleClickOpen = async () => {
     if (p?.id) {
-      // getPostById(selectedPost.id, session).then((p) => {
-      //   // console.log(p);
-      //   if (p)
-      //     setSelectedPost((pr) => {
-      //       return { ...pr, ...p };
-      //     });
-      //   setOpenUpdateDialog(true);
-      //   // console.log(post);
-      // });
-
       await dispatch(setSelectedPost({ ...new PostVM(p) }));
       setOpenUpdateDialog(true);
     }
@@ -305,37 +297,38 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
     if (myItem?.id && session?.user?.email) {
       if (
         myItem?.likes &&
-        myItem?.likes?.findIndex((l: any) => l == session?.user?.email) > -1
+        myItem?.likes?.findIndex(
+          (l: any) => l.createdById == new User(session?.user).id
+        ) > -1
       ) {
-        deleteLike(myItem.id).then((p) => {
+        deleteLike(myItem.id, new User(session?.user).id).then((p) => {
           // console.log(p);
-          if (p)
-            dispatch(
-              setSelectedPost((pr: any) => {
-                let l = pr.likes.filter((l: any) => l != session?.user?.email);
-                return { ...pr, ...{ likes: l } };
-              })
-            );
-          setMyIem((pr: any) => {
-            let l = pr.likes.filter((l: any) => l != session?.user?.email);
-            return { ...pr, ...{ likes: l } };
-          });
-          // console.log('post ddsds          ddddddddddddddddddd');
+          if (p?.res?.count) {
+            setMyIem((pr: any) => {
+              let l = pr.likes.filter(
+                (l: any) => l.createdById != new User(session?.user).id
+              );
+              dispatch(setSelectedPost({ ...myItem, likes: l }));
+              return { ...pr, ...{ likes: l } };
+            });
+          }
+          // console.log('post ddsdsddddddddddddddddddd');
         });
       } else
-        createLike(selectedPost.id).then((p) => {
+        createLike({
+          postId: myItem.id,
+          createdById: new User(session?.user).id,
+          modifiedById: new User(session?.user).id,
+        }).then((p) => {
+          // console.log(session);
           // console.log(p);
-          if (p)
-            dispatch(
-              setSelectedPost((pr: any) => {
-                let l = [...pr.likes, session?.user?.email];
-                return { ...pr, ...{ likes: l } };
-              })
-            );
-          setMyIem((pr: any) => {
-            let l = [...pr.likes, session?.user?.email];
-            return { ...pr, ...{ likes: l } };
-          });
+          if (p?.like)
+            setMyIem((pr: any) => {
+              dispatch(
+                setSelectedPost({ ...pr, ...{ likes: [...pr.likes, p.like] } })
+              );
+              return { ...pr, ...{ likes: [...pr.likes, p.like] } };
+            });
           // console.log(post);
         });
     } else {
@@ -422,7 +415,7 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
         className="h-fit blur-load grid"
       >
         {isViewOnly ? (
-          myItem?.image?.split('post/').length == 1 ? (
+          myItem?.publicUrl ? (
             <Image
               // loading="lazy"
               // component="img"
@@ -547,7 +540,7 @@ export default function CardPost({ p, showEditBtn, isViewOnly }: any) {
                   sx={{
                     color:
                       myItem?.likes?.findIndex(
-                        (l: any) => l == session?.user?.email
+                        (l: any) => l?.createdById == new User(session?.user).id
                       ) > -1
                         ? ''
                         : 'text.secondary',

@@ -28,7 +28,7 @@ const handlers = NextAuth({
         const { email } = credentials;
         let result: any = await prismadb.user.findUnique({
           where: { email: email },
-          include: { profile: true },
+          include: { profile: { select: { bio: true } } },
         });
         const { password } = result;
 

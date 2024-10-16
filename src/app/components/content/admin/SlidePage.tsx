@@ -23,10 +23,7 @@ import {
 } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import React, { useEffect, useState } from 'react';
-import {
-  updateListSwiper,
-  updateSwiperSatatus,
-} from '@/service/admin/swiperService';
+import { updateListSwiper, updateSwiperSatatus } from '@/service/swiperService';
 import { getImgByName, uploadImg } from '@/service/aws/awsService';
 import SortableList from '../../swiper/sortableList';
 const OneLove = [

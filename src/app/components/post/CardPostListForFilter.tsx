@@ -3,8 +3,10 @@ import React, { useContext } from 'react';
 import CardPost from './CardPost';
 
 import CardSkeleton from '../skeleton/CardSkeleton';
-import { PostContext } from '../content/CategoryContend';
+// import { PostContext } from '../content/CategoryContend';
 import { Post } from '@prisma/client';
+import { RootState } from '@/src/provider/redux/store';
+import { useSelector } from 'react-redux';
 
 const Item = styled(Paper)(({ theme }) => ({
   // backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -15,8 +17,16 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 export default function CardPostListForFilter({ lastElmntRef }: any) {
-  const { posts, setPosts, isPageLoading, isPageLoadingMore } =
-    useContext(PostContext);
+  // const { posts, setPosts, isPageLoading, isPageLoadingMore } =
+  //   useContext(PostContext);
+  const {
+    posts,
+    setPosts,
+    isPageLoading,
+    isPageLoadingMore,
+    hasMore,
+    pageNumber,
+  }: any = useSelector((state: RootState) => state.paginate);
 
   return (
     <Box sx={{ gridArea: 'main' }} key={'mn'} className="min-h-screen">
@@ -34,7 +44,7 @@ export default function CardPostListForFilter({ lastElmntRef }: any) {
       >
         {!isPageLoading
           ? posts?.length > 0 &&
-            posts?.map((p: Post, i) =>
+            posts?.map((p: Post, i: number) =>
               posts.length == i + 1 ? (
                 <Item
                   ref={lastElmntRef}

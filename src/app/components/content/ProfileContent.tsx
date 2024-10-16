@@ -17,6 +17,7 @@ import {
 import { useSession } from 'next-auth/react';
 import React, { useEffect, useState } from 'react';
 import {
+  createProfile,
   deleteProfile,
   findProfileByUserId,
   updateProfile,
@@ -35,6 +36,7 @@ export default function ProfileContent() {
   const [nameRef, setNameRef] = React.useState<any>();
   const [bioRef, setBioRef] = React.useState<any>();
   const [user, setUser] = React.useState<User>(new User({}));
+  const [profile, setProfile] = React.useState<any>({});
   const { data: session } = useSession();
 
   const imageChange = async (e: any) => {
@@ -55,41 +57,73 @@ export default function ProfileContent() {
 
   useEffect(() => {
     // console.log(session);
-    if (session) {
-      setUser((u) => new User(session?.user));
-      findProfileByUserId(user.id).then((d: any) => {
+    if (session?.user) {
+      setLoadingP(true);
+      let uu = new User(session?.user);
+      setUser((u) => uu);
+      setNameRef((p: any) => uu.name);
+      findProfileByUserId(uu.id).then((d: any) => {
+        d = d.profile;
         // console.log(d);
         if (d?.id) {
-          setUser((pre) => new User(d));
-          setSelectedImage((p: any) => d.image);
-          setNameRef((p: any) => d.name);
+          setProfile((pre: any) => d);
+          if (d.image?.data) {
+            setSelectedImage((p: any) => convertToImg(d.image.data));
+          }
+          setNameRef((p: any) => d.user.name);
           setBioRef((p: any) => d.bio);
-          console.log(d);
-          setLoadingP(false);
+          // console.log(d);
         }
+        setLoadingP(false);
       });
-    }
+    } else setLoadingP(false);
   }, [session]);
 
-  function updateMe_() {
+  function saveMe_() {
     setLoading(true);
     let data: any = {
-      ...user,
+      userId: user.id,
       name: nameRef,
       bio: bioRef,
       image: selectedImage,
     };
-    updateProfile(data).then((d: any) => {
-      if (d?.id) {
-        setUser((pre) => new User(d));
-        setNameRef((p: any) => d.name);
-        setBioRef((p: any) => d.bio);
-        console.log(d);
+    if (profile.id) {
+      data.id = profile.id;
+      updateProfile(data).then((d: any) => {
+        if (d?.id) {
+          setProfile((pre: any) => d);
+          if (d.image?.data) {
+            setSelectedImage((p: any) => convertToImg(d.image.data));
+          }
+          setNameRef((p: any) => d.name);
+          setBioRef((p: any) => d.bio);
+          console.log(d);
+          setTimeout(() => {
+            setLoading(false);
+          }, 1000);
+        }
         setTimeout(() => {
           setLoading(false);
         }, 1000);
-      }
-    });
+      });
+    } else
+      createProfile(data).then((d: any) => {
+        if (d?.id) {
+          setProfile((pre: any) => d);
+          if (d.image?.data) {
+            setSelectedImage((p: any) => convertToImg(d.image.data));
+          }
+          setNameRef((p: any) => d.name);
+          setBioRef((p: any) => d.bio);
+          console.log(d);
+          setTimeout(() => {
+            setLoading(false);
+          }, 1000);
+        }
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
+      });
   }
 
   function deleteMe_() {
@@ -98,6 +132,16 @@ export default function ProfileContent() {
         console.log(d);
       }
     });
+  }
+
+  function convertToImg(buffArr: any) {
+    // let buffer = await btoa(
+    //   new Uint8Array(buffArr).reduce(function (data, byte) {
+    //     return data + String.fromCharCode(byte);
+    //   }, '')
+    // );
+    return `data:image/jpeg;base64,${Buffer.from(buffArr).toString('base64')}`;
+    // `data:image/jpeg;base64,${buffer}`;
   }
   return (
     <Card
@@ -207,7 +251,7 @@ export default function ProfileContent() {
                 <LoadingButton
                   size="small"
                   color="secondary"
-                  onClick={updateMe_}
+                  onClick={saveMe_}
                   loading={loading}
                   loadingPosition="start"
                   startIcon={<SaveIcon />}

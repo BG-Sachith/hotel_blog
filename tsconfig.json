@@ -27,7 +27,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/provider/redux/ReduxProvider.tsx",
-    "src/app/components/ckeditor/Editor.jsx"
+    "src/app/components/ckeditor/Editor.jsx",
+    "src/app/components/ckeditor/Editor2.jsx"
   ],
   "exclude": ["node_modules"]
 }

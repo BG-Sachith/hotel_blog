@@ -1,5 +1,5 @@
 export const createLike = async (data: any) => {
-  const res = await fetch(`/api/user/like`, {
+  const res = await fetch(`/api/user/likes`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -10,7 +10,7 @@ export const createLike = async (data: any) => {
 };
 
 export const findAllByPostId = async (postId: Number) => {
-  const res = await fetch(`/api/user/like?postId=${postId}`, {
+  const res = await fetch(`/api/user/likes?postId=${postId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -19,11 +19,12 @@ export const findAllByPostId = async (postId: Number) => {
   return await res.json();
 };
 
-export const deleteLike = async (id: any) => {
+export const deleteLike = async (postId: number, userId: number) => {
   const res = await fetch(
-    `/api/user/like?` +
+    `/api/user/likes?` +
       new URLSearchParams({
-        id: id,
+        postId: postId + '',
+        userId: userId + '',
       }),
     {
       method: 'DELETE',

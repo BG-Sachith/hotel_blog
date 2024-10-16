@@ -26,14 +26,15 @@ import { RootState } from '@/src/provider/redux/store';
 import router from 'next/router';
 import { setSelectedPost } from '@/src/provider/redux/features/SelectedItem';
 import { PostVM } from '@/src/modules/PostVm';
+import { VariantType, enqueueSnackbar } from 'notistack';
+import { uploadImgForKey } from '@/src/service/aws/awsService';
 
 export default function PostViewContent() {
   const dispatch = useDispatch();
   const { selectedPost }: any = useSelector(
     (state: RootState) => state.selectedItem
   );
-  const [myPost, setMyPost] = useState<Post>();
-  const [selectedPostImg, setMyPostImg] = useState<any>([]);
+  const [myPost, setMyPost] = useState<Post>(selectedPost ? selectedPost : {});
   const [relatedPosts, setRelatedPosts] = useState([]);
 
   const [isLoading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ export default function PostViewContent() {
       setIsViewed((p) => false);
       findCommntsByPostId(selectedPost.id).then((v_) => {
         if (v_.data) {
-          let pst: any = { ...v_.data };
+          let pst: any = v_.data;
           setMyPost((pr: any) => {
             return { ...pr, comments: pst };
           });
@@ -86,15 +87,6 @@ export default function PostViewContent() {
       ).then(async (v) => {
         // console.log(v);
         if (v.data) {
-          // setRelatedPosts(v.data);
-          // const psts: any = [];
-          // for (const po of v) {
-          //   // let psts = await d?.map(async (po: any) => {
-          //   if (po?.image)
-          //     psts.push({ ...po, image: await getMyImg(po.image, po.id) });
-          //   else psts.push(po);
-          //   // });
-          // }
           setRelatedPosts((pr) => v.data);
         }
         // setLoading(false);
@@ -107,64 +99,76 @@ export default function PostViewContent() {
     setIsViewed(v);
   }, []);
 
-  const updateMe = async (data: any, selectedImage: any) => {
+  const handleClickVariant = (variant: VariantType, msg: any) => {
+    // variant could be success, error, warning, info, or default
+    enqueueSnackbar(msg, { variant });
+  };
+
+  const updateMe = useCallback(async (data: any, selectedImage: any) => {
     console.log(data);
 
     if (!data?.tags || data?.tags?.length == 0) {
+      handleClickVariant('warning', 'Please Select Tags!');
       // setSnackbar({ children: 'Please Select Tags', severity: 'warning' });
       return;
     }
     if (!data?.category) {
+      handleClickVariant('warning', 'Please Select Category!');
       // setSnackbar({ children: 'Please Select Category', severity: 'warning' });
       return;
     }
     data = { ...data, image: '', publicUrl: '' }; //todo remove
-    // if (!data?.image && selectedImage) {
-    //   if (selectedImage?.type) {
-    //     let name_ =
-    //       selectedPostImg && selectedPostImg.split('/').length > 1
-    //         ? selectedPostImg.split('/')[1].split('_post.')[0] +
-    //           '_post.' +
-    //           selectedImage.type.split('/')[1]
-    //         : Date.now() + '_post.' + selectedImage.type.split('/')[1];
-    //     // console.log(selectedImage);
-    //     // console.log(name_);
-    //     const { fileRes } = await uploadImgForKey(
-    //       name_,
-    //       'post/',
-    //       selectedImage
-    //     );
-    //     // console.log(fileRes);
-    //     if (fileRes?.Key) {
-    //       data.image = fileRes.Key;
-    //       data.publicUrl = fileRes.Location;
-    //     }
-    //   } else data.image = selectedPostImg;
-    // }
+    const regex = /post\/[^?]*/;
+    const match = selectedImage.match(regex);
+    if (!data?.image && selectedImage) {
+      if (selectedImage?.type) {
+        let name_ = Date.now() + '_post.' + selectedImage.type.split('/')[1];
+        const { fileRes } = await uploadImgForKey(
+          name_,
+          'post/',
+          selectedImage
+        );
+        // console.log(fileRes);
+        if (fileRes?.Key) {
+          data.image = fileRes.Key;
+          data.publicUrl = fileRes.Location;
+        }
+      } else if (match) {
+        data.image = match[0];
+      } else data.image = selectedImage;
+    } else {
+      handleClickVariant('warning', 'Please Select Image!');
+      return;
+    }
     // console.log(data);
     setLoadingU(true);
+    setIsViewed(false);
     updatePost(data).then((d) => {
       if (d.data) {
-        console.log(d);
+        // console.log(d);
         if (selectedImage)
-          d.data.image =
-            selectedImage?.type != null
-              ? URL.createObjectURL(selectedImage)
-              : selectedImage;
+          d.data.image = selectedImage?.type
+            ? URL.createObjectURL(selectedImage)
+            : selectedImage;
         setMyPost((p: any) => d.data);
         dispatch(setSelectedPost({ ...d.data }));
-        // setPosts((pr) => [...pr.filter((p) => p.id != data.id), d]);
+        handleClickVariant('success', 'Successfully updated');
+        setIsViewed(true);
+      } else {
+        handleClickVariant('error', 'Fail');
       }
       setLoadingU(false);
       setOpenUpdateDialog(false);
     });
-  };
+  }, []);
 
   const updateStatus = (id: any, stt: any) => {
     setLoadingU(true);
     updatePostStatus(id, stt).then((d) => {
       if (d.data) {
-        setMyPost(d.data);
+        setMyPost((pr: any) => {
+          return { ...d.data };
+        });
         dispatch(setSelectedPost({ ...d.data }));
         // setPosts((pr) => pr.filter((p: Post) => !p?.isPublish && p.id != id));
       }

@@ -23,14 +23,17 @@ export default function PostView({ params }: any) {
   const [loading, setLoading] = useState<any>(true);
   const dispatch = useDispatch();
   useEffect(() => {
-    setLoading(() => true);
-    findPost(params.id).then((_p) => {
-      // console.log(_p);
-      dispatch(setSelectedPost({ ..._p.data }));
-    });
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    if (params?.id) {
+      setLoading(() => true);
+      findPost(params.id).then((_p) => {
+        // console.log(_p);
+        dispatch(setSelectedPost({ ..._p.data }));
+      });
+      let t = setTimeout(() => {
+        setLoading(false);
+        clearTimeout(t);
+      }, 500);
+    }
   }, [params?.id]);
 
   return (

@@ -1,3 +1,7 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    // "no-console": "off" // Disable the no-console rule
+    // "react/no-unescaped-entities": "off" // Disable the no-unescaped-entities rule
+  }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prismadb from '@/src/util/prismadb';
 import { Post, Tag } from '@prisma/client';
 import { PostContentVM, PostDTO } from '@/src/modules/PostVm';
+import { populateS3SignedUrl } from '../../aws/awsService';
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -29,6 +30,9 @@ export const POST = async (req: NextRequest) => {
       select: { tag: { select: { id: true, name: true } } },
     });
     res.tags = postTag.map((p: any) => p.tag);
+    res.publicUrl = res.image
+      ? await populateS3SignedUrl(res.image)
+      : res.publicUrl;
     return NextResponse.json({ data: res }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });
@@ -64,6 +68,9 @@ export const PUT = async (req: NextRequest) => {
       where: { postId: res.id },
       select: { tag: { select: { id: true, name: true } } },
     });
+    res.publicUrl = res.image
+      ? await populateS3SignedUrl(res.image)
+      : res.publicUrl;
     res.tags = postTag.map((p: any) => p.tag);
     return NextResponse.json({ data: res }, { status: 200 });
   } catch (error) {
@@ -80,6 +87,9 @@ export const PATCH = async (req: NextRequest) => {
       where: { id: id },
       data: { active: true, published: stt },
     });
+    res.publicUrl = res.image
+      ? await populateS3SignedUrl(res.image)
+      : res.publicUrl;
     return NextResponse.json({ data: res }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });

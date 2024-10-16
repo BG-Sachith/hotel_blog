@@ -12,17 +12,18 @@ export const GET = async (req: any, res: any) => {
     let otp = await prismadb.otp.findFirst({
       where: { email: email },
     });
+    console.log(otpVal);
     if (otp) {
-      return otp.otp === otpVal
+      return otp.otp == otpVal
         ? NextResponse.json({ message: 'OK' }, { status: 200 })
         : NextResponse.json(
             { message: 'Invalid Code, check inbox' },
-            { status: 404 }
+            { status: 400 }
           );
     } else
       NextResponse.json(
         { message: 'Invalid Code, check inbox' },
-        { status: 404 }
+        { status: 400 }
       );
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });

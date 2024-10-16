@@ -51,7 +51,7 @@ import { PostTag } from '@/src/modules/postTag';
 import { RootState } from '@/src/provider/redux/store';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '@/src/provider/redux/features/ToggleTheme';
-import { PostContentVM } from '@/src/modules/PostVm';
+import { PostContentVM, PostVM } from '@/src/modules/PostVm';
 import { setSelectedPost } from '@/src/provider/redux/features/SelectedItem';
 
 // const CardPost = dynamic(() => import('../post/CardPost'));
@@ -165,7 +165,7 @@ export default function FullScreenPostDialog({
   const { data: session } = useSession();
   const [value, setValue] = useState(0);
   // const [content, setContent] = useState();
-  const [selectedImage, setSelectedImage] = useState(selectedPost.image);
+  const [selectedImage, setSelectedImage] = useState(selectedPost.publicUrl);
   const [isViewed, setIsViewed] = useState(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
@@ -182,7 +182,7 @@ export default function FullScreenPostDialog({
   });
   const [editorLoaded, setEditorLoaded] = useState<boolean>(false);
   const [dataLoading, setDataLoading] = useState<boolean>(true);
-  // const [data, setData] = useState<string>('');
+  const [isImageChange, setIsImageChange] = useState<boolean>(false);
   const [ed, setEd] = useState<any>('');
 
   const [snackbar, setSnackbar] = React.useState<Pick<
@@ -208,13 +208,14 @@ export default function FullScreenPostDialog({
         });
         return;
       }
-      setSelectedImage(e.target.files[0]);
+      setSelectedImage((pr: any) => e.target.files[0]);
       dispatch(
         setSelectedPost({
           ...selectedPost,
           image: URL.createObjectURL(e.target.files[0]),
         })
       );
+      setIsImageChange((pr) => true);
       // selectedPost.image = ;
     }
   };
@@ -252,22 +253,27 @@ export default function FullScreenPostDialog({
           .then((v_) => {
             let v = { ...v_ };
             if (v.data) dispatch(setSelectedPost(v.data));
-            console.log(v);
-            if (v.data?.image && v.data?.image?.split('post/').length > 1) {
-              // console.log(selectedPost);
-              getImgByName(v.data?.image?.split('post/')[1], session).then(
-                (r) => {
-                  if (r?.fileRes) {
-                    // selectedPost.image = r.fileRes;
-                    // console.log(selectedPost.image);
-                    if (r?.fileRes) setSelectedImage((s: any) => r.fileRes);
-                    dispatch(
-                      setSelectedPost({ ...selectedPost, image: r.fileRes })
-                    );
-                  } else v.data.image = DEFAULT_IMG;
-                }
-              );
-            }
+            // console.log(v);
+            if (v?.data?.publicUrl)
+              setSelectedImage((s: any) => v?.data?.publicUrl);
+            // dispatch(
+            //   setSelectedPost({ ...selectedPost, image: r.fileRes })
+            // );
+            // if (v.data?.image && v.data?.image?.split('post/').length > 1) {
+            //   // console.log(selectedPost);
+            //   getImgByName(v.data?.image?.split('post/')[1], session).then(
+            //     (r) => {
+            //       if (r?.fileRes) {
+            //         // selectedPost.image = r.fileRes;
+            //         // console.log(selectedPost.image);
+            //         if (r?.fileRes) setSelectedImage((s: any) => r.fileRes);
+            //         dispatch(
+            //           setSelectedPost({ ...selectedPost, image: r.fileRes })
+            //         );
+            //       } else v.data.image = DEFAULT_IMG;
+            //     }
+            //   );
+            // }
             // console.log(v);
             if (v.data) {
               if (v.data?.tags)
@@ -303,6 +309,7 @@ export default function FullScreenPostDialog({
         }, 3000);
       }
     }
+    () => dispatch(setSelectedPost({ ...new PostVM({}) }));
   }, [open]);
 
   useEffect(() => {
@@ -569,10 +576,10 @@ export default function FullScreenPostDialog({
                         width: '600px',
                       }}
                     >
-                      {selectedPost?.image ? (
+                      {selectedPost?.publicUrl && !isImageChange ? (
                         <ImageSrc
                           style={{
-                            backgroundImage: `url(${selectedPost.image})`,
+                            backgroundImage: `url(${selectedPost.publicUrl})`,
                           }}
                         />
                       ) : (
@@ -724,7 +731,7 @@ export default function FullScreenPostDialog({
                       <br />
                     </Typography>
                     <Typography>
-                      {JSON.stringify(selectedPost)}
+                      {/* {JSON.stringify(selectedPost)} */}
                       <br />
                     </Typography>
                     <Typography>
@@ -763,7 +770,14 @@ export default function FullScreenPostDialog({
                             updateStatus={() => {}}
                             isViewed={isViewed}
                             setPgViewed={setPgViewed}
-                            selectedPost={selectedPost}
+                            selectedPost={
+                              isImageChange
+                                ? {
+                                    ...selectedPost,
+                                    publicUrl: selectedPost.image,
+                                  }
+                                : selectedPost
+                            }
                           ></PostCardView>
                           {/* </SelectedPostContext.Provider> */}
                         </Box>
@@ -775,7 +789,14 @@ export default function FullScreenPostDialog({
                         className=" ml-3 rounded  p-3"
                       >
                         <CardPost
-                          p={selectedPost}
+                          p={
+                            isImageChange
+                              ? {
+                                  ...selectedPost,
+                                  publicUrl: selectedPost.image,
+                                }
+                              : selectedPost
+                          }
                           showEditBtn={false}
                           isViewOnly={true}
                           setPosts={[]}
